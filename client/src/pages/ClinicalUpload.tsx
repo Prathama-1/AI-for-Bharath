@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { uploadClinicalData } from "@/lib/awsApi";
+import { setWorkflowState } from "@/lib/workflowStorage";
 
 /**
  * Design Philosophy: Empathetic Healthcare Minimalism
@@ -29,8 +31,10 @@ export default function ClinicalUpload() {
   const [patientAge, setPatientAge] = useState("");
   const [clinicalData, setClinicalData] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -63,18 +67,49 @@ export default function ClinicalUpload() {
         setUploadProgress(progress);
       }, 300);
     });
+
+    setSelectedFiles((prev) => [...prev, ...Array.from(files)]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
 
-    // Simulate API call to AWS Lambda
-    setTimeout(() => {
-      setIsSubmitting(false);
-      // Navigate to explanation page with mock data
+    try {
+      const response = await uploadClinicalData({
+        patientName,
+        patientAge: Number(patientAge),
+        clinicalData,
+        files: selectedFiles.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        })),
+      });
+
+      setWorkflowState({
+        caseId: response.caseId,
+        patientName,
+        patientAge: Number(patientAge),
+        clinicalData,
+        explanations: response.explanations,
+      });
+
       navigate("/explanation");
-    }, 2000);
+    } catch (error) {
+      const fallbackCaseId = `local-${Date.now()}`;
+      setWorkflowState({
+        caseId: fallbackCaseId,
+        patientName,
+        patientAge: Number(patientAge),
+        clinicalData,
+      });
+      setErrorMessage(error instanceof Error ? error.message : "Failed to connect to AWS API. Proceeding with local demo data.");
+      navigate("/explanation");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = patientName && patientAge && (clinicalData || uploadedFiles.length > 0);
@@ -256,6 +291,12 @@ export default function ClinicalUpload() {
             </Card>
 
             {/* Information Card */}
+            {errorMessage && (
+              <Card className="p-4 border border-yellow-300 bg-yellow-50">
+                <p className="text-sm text-yellow-800">{errorMessage}</p>
+              </Card>
+            )}
+
             <Card className="p-6 bg-primary/5 border border-primary/20">
               <div className="flex gap-4">
                 <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
