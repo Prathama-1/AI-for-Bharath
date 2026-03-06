@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, CheckCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { generatePdf } from "@/lib/awsApi";
+import { getWorkflowState, setWorkflowState } from "@/lib/workflowStorage";
 
 /**
  * Design Philosophy: Empathetic Healthcare Minimalism
@@ -77,19 +79,43 @@ export default function PDFGeneration() {
   const [, navigate] = useLocation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(getWorkflowState().pdfUrl || "");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGeneratePDF = async () => {
     setIsGenerating(true);
+    setErrorMessage(null);
 
-    // Simulate PDF generation with AWS Lambda + S3
-    setTimeout(() => {
-      setIsGenerating(false);
+    const workflow = getWorkflowState();
+    try {
+      if (!workflow.caseId || !workflow.patientName || !workflow.patientAge) {
+        throw new Error("Missing patient context. Please restart from Clinical Upload.");
+      }
+
+      const response = await generatePdf({
+        caseId: workflow.caseId,
+        patientName: workflow.patientName,
+        patientAge: workflow.patientAge,
+        explanations: workflow.explanations || [],
+        schemes: workflow.schemes || [],
+      });
+
+      setDownloadUrl(response.pdfUrl);
+      setWorkflowState({ pdfUrl: response.pdfUrl });
       setIsGenerated(true);
-    }, 2000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to generate PDF from AWS.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleDownload = () => {
-    // In a real implementation, this would download from S3
+    if (downloadUrl) {
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     const element = document.createElement("a");
     element.setAttribute("href", "data:text/plain;charset=utf-8,Mock PDF Content");
     element.setAttribute("download", "medical-assistance-claim.pdf");
@@ -164,6 +190,12 @@ export default function PDFGeneration() {
 
           {!isGenerated ? (
             <>
+              {errorMessage && (
+                <Card className="p-4 mb-6 border border-yellow-300 bg-yellow-50">
+                  <p className="text-sm text-yellow-800">{errorMessage}</p>
+                </Card>
+              )}
+
               {/* Document Preview */}
               <Card className="p-8 mb-8 border border-border">
                 <h2 className="text-2xl font-bold text-foreground mb-6">Document Preview</h2>

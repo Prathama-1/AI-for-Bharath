@@ -3,8 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Globe, Volume2, Copy, Check, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { fetchExplanation } from "@/lib/awsApi";
+import { getWorkflowState, setWorkflowState } from "@/lib/workflowStorage";
 
 /**
  * Design Philosophy: Empathetic Healthcare Minimalism
@@ -63,9 +65,37 @@ export default function Explanation() {
   const [selectedExplanation, setSelectedExplanation] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [explanations, setExplanations] = useState<ExplanationContent[]>(
+    getWorkflowState().explanations || mockExplanations,
+  );
 
-  const currentExplanation = mockExplanations[selectedExplanation];
+  const currentExplanation = explanations[selectedExplanation] || explanations[0];
   const languageName = languages.find((l) => l.code === selectedLanguage)?.name || "English";
+
+  useEffect(() => {
+    const workflow = getWorkflowState();
+    if (!workflow.caseId) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    fetchExplanation(workflow.caseId, selectedLanguage)
+      .then((response) => {
+        setExplanations(response.explanations);
+        setWorkflowState({
+          selectedLanguage,
+          explanations: response.explanations,
+        });
+      })
+      .catch((error) => {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to fetch translated explanation from AWS.");
+      })
+      .finally(() => setIsLoading(false));
+  }, [selectedLanguage]);
 
   const handleSpeak = (text: string) => {
     if (isSpeaking) {
@@ -165,16 +195,24 @@ export default function Explanation() {
           </Card>
 
           {/* Explanation Tabs */}
+          {errorMessage && (
+            <Card className="p-4 mb-6 border border-yellow-300 bg-yellow-50">
+              <p className="text-sm text-yellow-800">{errorMessage}</p>
+            </Card>
+          )}
+
           <Tabs value={selectedExplanation.toString()} onValueChange={(v) => setSelectedExplanation(parseInt(v))}>
             <TabsList className="grid w-full grid-cols-3 mb-8">
-              {mockExplanations.map((exp, idx) => (
+              {explanations.map((exp, idx) => (
                 <TabsTrigger key={idx} value={idx.toString()}>
                   {exp.medicalTerm}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {mockExplanations.map((explanation, idx) => (
+            {isLoading && <p className="text-sm text-muted-foreground mb-4">Fetching translated explanation from AWS...</p>}
+
+            {explanations.map((explanation, idx) => (
               <TabsContent key={idx} value={idx.toString()} className="space-y-6">
                 {/* Main Explanation Card */}
                 <Card className="p-8 border border-border bg-gradient-to-br from-primary/5 to-secondary/5">

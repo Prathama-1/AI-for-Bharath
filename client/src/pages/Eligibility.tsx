@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertCircle, XCircle, ArrowRight, Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { checkEligibility } from "@/lib/awsApi";
+import { getWorkflowState, setWorkflowState } from "@/lib/workflowStorage";
 
 /**
  * Design Philosophy: Empathetic Healthcare Minimalism
@@ -130,10 +132,34 @@ const getStatusLabel = (status: string) => {
 export default function Eligibility() {
   const [, navigate] = useLocation();
   const [expandedScheme, setExpandedScheme] = useState<string | null>(null);
+  const [schemes, setSchemes] = useState<Scheme[]>(getWorkflowState().schemes || mockSchemes);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const eligibleSchemes = mockSchemes.filter((s) => s.eligibilityStatus === "eligible");
-  const partialSchemes = mockSchemes.filter((s) => s.eligibilityStatus === "partial");
-  const ineligibleSchemes = mockSchemes.filter((s) => s.eligibilityStatus === "ineligible");
+  useEffect(() => {
+    const workflow = getWorkflowState();
+    if (!workflow.caseId || !workflow.patientAge) {
+      return;
+    }
+
+    checkEligibility({
+      caseId: workflow.caseId,
+      patientProfile: {
+        age: workflow.patientAge,
+        name: workflow.patientName,
+      },
+    })
+      .then((response) => {
+        setSchemes(response.schemes);
+        setWorkflowState({ schemes: response.schemes });
+      })
+      .catch((error) => {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to fetch live eligibility from AWS.");
+      });
+  }, []);
+
+  const eligibleSchemes = schemes.filter((s) => s.eligibilityStatus === "eligible");
+  const partialSchemes = schemes.filter((s) => s.eligibilityStatus === "partial");
+  const ineligibleSchemes = schemes.filter((s) => s.eligibilityStatus === "ineligible");
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,6 +215,12 @@ export default function Eligibility() {
           </div>
 
           {/* Summary Card */}
+          {errorMessage && (
+            <Card className="p-4 mb-8 border border-yellow-300 bg-yellow-50">
+              <p className="text-sm text-yellow-800">{errorMessage}</p>
+            </Card>
+          )}
+
           <Card className="p-8 mb-8 border border-border bg-gradient-to-br from-primary/5 to-secondary/5">
             <h2 className="text-2xl font-bold text-foreground mb-4">Your Financial Aid Summary</h2>
             <div className="grid md:grid-cols-3 gap-6">
