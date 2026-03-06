@@ -262,7 +262,7 @@ export default function ClinicalUpload() {
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">Data Security</h3>
                   <p className="text-sm text-foreground">
-                    Your clinical data is encrypted and securely stored on AWS S3. We comply with HIPAA standards and never share your information without consent.
+                    Your clinical data is encrypted and securely stored. We comply with HIPAA standards and never share your information without consent.
                   </p>
                 </div>
               </div>
