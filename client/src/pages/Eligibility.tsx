@@ -324,20 +324,6 @@ export default function Eligibility() {
             </div>
           )}
 
-          {/* S3 Info Footer */}
-          {!results && (
-            <Card className="p-6 bg-primary/5 border border-primary/20">
-              <div className="flex gap-4">
-                <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">Live Matching Service</h3>
-                  <p className="text-sm text-foreground">
-                    This matching engine uses your profile to search against the latest government scheme rules stored in our **AWS DynamoDB** database. No data is permanently stored without your consent.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>
