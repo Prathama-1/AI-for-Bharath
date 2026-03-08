@@ -96,14 +96,44 @@ export default function ClinicalUpload() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (uploadedFiles.length === 0 && !clinicalData) return;
 
-    // Simulate API call to AWS Lambda
-    setTimeout(() => {
-      setIsSubmitting(false);
-      // Navigate to explanation page with mock data
+    setIsSubmitting(true);
+    try {
+      // 1. Get the key of the first successful upload
+      // If no file, we might want to handle text-only analysis later
+      const successfulFile = uploadedFiles.find(f => f.status === "success");
+      if (!successfulFile) {
+        throw new Error("Please wait for the file to finish uploading or provide medical text.");
+      }
+
+      const key = `uploads/${successfulFile.name}`;
+
+      // 2. Trigger AI Analysis
+      const response = await fetch("http://localhost:5000/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "AI Analysis failed");
+      }
+
+      const data = await response.json();
+      
+      // 3. Store results for the Explanation page
+      localStorage.setItem("medical_analysis", JSON.stringify(data.results));
+      
+      // 4. Navigate to explanation page
       navigate("/explanation");
-    }, 2000);
+    } catch (error: any) {
+      console.error("Analysis Error:", error);
+      alert(`Analysis failed: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = patientName && patientAge && (clinicalData || uploadedFiles.length > 0);
