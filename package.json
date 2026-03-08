@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
+    "api": "python -m uvicorn server.main:app --reload --port 5000",
     "format": "prettier --write ."
   },
   "dependencies": {

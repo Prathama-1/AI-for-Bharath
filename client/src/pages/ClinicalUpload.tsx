@@ -32,13 +32,14 @@ export default function ClinicalUpload() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
+    for (const file of Array.from(files)) {
+      const newFileId = Math.random().toString(36).substr(2, 9);
       const newFile: UploadedFile = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: newFileId,
         name: file.name,
         size: file.size,
         uploadedAt: new Date().toLocaleString(),
@@ -47,22 +48,50 @@ export default function ClinicalUpload() {
 
       setUploadedFiles((prev) => [...prev, newFile]);
 
-      // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          setUploadedFiles((prev) =>
-            prev.map((f) =>
-              f.id === newFile.id ? { ...f, status: "success" } : f
-            )
-          );
+      try {
+        console.log(`Starting upload for ${file.name}...`);
+        // 1. Get presigned URL from the Python backend
+        const apiUrl = `http://localhost:5000/api/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || "text/plain")}`;
+        console.log(`Fetching presigned URL from: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to get upload URL: ${response.status} ${errorText}`);
         }
-        setUploadProgress(progress);
-      }, 300);
-    });
+        
+        const { url } = await response.json();
+        console.log("Received presigned URL. Uploading to S3...");
+
+        // 2. Upload directly to S3
+        const uploadResponse = await fetch(url, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type || "text/plain",
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`S3 Upload failed with status: ${uploadResponse.status}`);
+        }
+
+        console.log("Upload successful!");
+
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === newFileId ? { ...f, status: "success" } : f
+          )
+        );
+      } catch (error) {
+        console.error("S3 Upload Error:", error);
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === newFileId ? { ...f, status: "error" } : f
+          )
+        );
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -37,3 +37,14 @@ Thumbs.db
 
 # Vite
 .manus-logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+.pytest_cache/
