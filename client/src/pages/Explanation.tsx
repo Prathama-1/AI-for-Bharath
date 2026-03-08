@@ -200,7 +200,7 @@ export default function Explanation() {
                       Overall Health Status: {analysis.overallSeverity}
                     </span>
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-extrabold leading-tight text-foreground max-w-3xl">
+                  <h2 className="text-2xl md:text-3xl font-extrabold leading-relaxed text-foreground max-w-3xl">
                     {analysis.holisticSummary}
                   </h2>
                   <div className="flex flex-wrap gap-4 pt-2">

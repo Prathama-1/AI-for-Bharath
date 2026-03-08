@@ -73,7 +73,7 @@ export default function ClinicalUpload() {
       try {
         console.log(`Starting upload for ${file.name}...`);
         // 1. Get presigned URL from the Python backend
-        const apiUrl = `http://localhost:5000/api/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || "text/plain")}`;
+        const apiUrl = `/api/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || "text/plain")}`;
         console.log(`Fetching presigned URL from: ${apiUrl}`);
         
         const response = await fetch(apiUrl);
@@ -133,14 +133,14 @@ export default function ClinicalUpload() {
         const key = `uploads/${successfulFile.name}`;
 
         // 2. Trigger AI Analysis with file
-        response = await fetch("http://localhost:5000/api/analyze", {
+        response = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key, raw_text: clinicalData }), // Send both if available
         });
       } else if (clinicalData) {
         // 2. Trigger AI Analysis with text only
-        response = await fetch("http://localhost:5000/api/analyze", {
+        response = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ raw_text: clinicalData }),

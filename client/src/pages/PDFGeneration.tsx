@@ -212,7 +212,7 @@ export default function PDFGeneration() {
         "Please carry your Aadhaar card and Ration card to the nearest enrollment center."
       ];
 
-      const response = await fetch("http://localhost:5000/api/translate-batch", {
+      const response = await fetch("/api/translate-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ texts: stringsToTranslate, target_lang: "hi" }),
