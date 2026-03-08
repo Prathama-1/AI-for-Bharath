@@ -296,12 +296,6 @@ export default function Eligibility() {
                     ))}
                   </div>
 
-                  {scheme.status !== "Not Eligible" && (
-                    <Button variant="outline" className="mt-6 w-full gap-2 group">
-                      Review Eligibility for this Scheme
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  )}
                 </Card>
               ))}
 
