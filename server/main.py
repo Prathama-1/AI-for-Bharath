@@ -50,10 +50,15 @@ dynamodb = boto3.resource(
 )
 
 class AnalyzeRequest(BaseModel):
-    key: str
+    key: str | None = None
+    raw_text: str | None = None
 
 class TranslateRequest(BaseModel):
     text: str
+    target_lang: str
+
+class TranslateBatchRequest(BaseModel):
+    texts: list[str]
     target_lang: str
 
 class EligibilityRequest(BaseModel):
@@ -202,17 +207,28 @@ async def analyze_file(request_data: AnalyzeRequest):
         }
 
     try:
-        # 1. Fetch file content from S3
-        response = s3_client.get_object(Bucket=bucket_name, Key=request_data.key)
-        file_content = response['Body'].read().decode('utf-8')
+        file_content = ""
+        if request_data.raw_text:
+            file_content = request_data.raw_text
+        elif request_data.key:
+            # 1. Fetch file content from S3
+            response = s3_client.get_object(Bucket=bucket_name, Key=request_data.key)
+            file_content = response['Body'].read().decode('utf-8')
+        else:
+            raise HTTPException(status_code=400, detail="No medical text or file key provided")
 
         # 2. Prepare Bedrock Call (Amazon Nova 2 Lite - US Inference Profile)
         model_id = "us.amazon.nova-2-lite-v1:0"
         print(f"DEBUG: Using Bedrock model_id: {model_id}")
         
         system_prompt = (
-            "You are an empathetic healthcare assistant. Analyze the medical text and extract important terms. "
-            "Return ONLY a JSON list of objects with keys: 'medicalTerm', 'simplifiedExplanation', 'whatItMeans', 'whyItMatters', 'nextSteps'. "
+            "You are an empathetic healthcare assistant. Analyze the medical text and provide a holistic Patient Wellness Roadmap. "
+            "1. Generate a 'holisticSummary': A 2-3 sentence overview of the patient's health status. "
+            "2. Determine an 'overallSeverity': STRICTLY one of 'Stable', 'Attention', or 'Critical'. (Attention is for elevated but non-emergency levels). "
+            "3. Extract important 'terms': Each with 'medicalTerm', 'severity' (STRICTLY one of 'Stable', 'Attention', or 'Critical'), 'simplifiedExplanation', 'whatItMeans', 'whyItMatters', 'nextSteps'. "
+            "4. Extract 'medications': A list of objects with 'name', 'dosage', and 'why_prescribed' (simplified explanation of why this medicine is given). "
+            "5. Provide 'consolidatedNextSteps': A list of the 3-4 most important physical or lifestyle actions. "
+            "Return ONLY a JSON object with these keys: 'holisticSummary', 'overallSeverity', 'terms', 'medications', 'consolidatedNextSteps'. "
             "Do not include markdown or explanations outside the JSON."
         )
         
@@ -278,6 +294,48 @@ async def translate_text(request: TranslateRequest):
         return {"translatedText": response['TranslatedText']}
     except Exception as e:
         print(f"Translation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/translate-batch")
+async def translate_batch(request: TranslateBatchRequest):
+    """
+    Translates a list of strings efficiently using a single AWS Translate call.
+    Uses ' ||| ' as a delimiter.
+    """
+    if not request.texts:
+        return {"translations": []}
+    
+    is_mock = os.getenv("MOCK_AI", "false").lower() == "true"
+    if is_mock:
+        return {"translations": [f"[Mock {request.target_lang}]: {t}" for t in request.texts]}
+
+    try:
+        # Join texts with a delimiter that Translate usually preserves
+        delimiter = " [X-DELIM] "
+        combined_text = delimiter.join(request.texts)
+        
+        # Guard against AWS Translate limits (approx 10kb)
+        if len(combined_text) > 9000:
+             combined_text = combined_text[:9000]
+
+        response = translate_client.translate_text(
+            Text=combined_text,
+            SourceLanguageCode="en",
+            TargetLanguageCode=request.target_lang
+        )
+        
+        translated_combined = response['TranslatedText']
+        # Split back by the same delimiter
+        translations = [t.strip() for t in translated_combined.split("[X-DELIM]")]
+        
+        # Ensure we return the same number of items (pad if needed)
+        while len(translations) < len(request.texts):
+            translations.append("")
+            
+        return {"translations": translations[:len(request.texts)]}
+
+    except Exception as e:
+        print(f"Batch translation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

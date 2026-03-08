@@ -31,9 +31,8 @@ export default function Home() {
           <nav className="hidden md:flex gap-8">
             <a href="#features" className="text-foreground hover:text-primary transition-colors">Features</a>
             <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">How It Works</a>
-            <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
           </nav>
-          <Button className="bg-primary hover:bg-primary/90 text-white">Get Started</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => navigate("/upload")}>Get Started</Button>
         </div>
       </header>
 
@@ -54,9 +53,6 @@ export default function Home() {
               <div className="flex gap-4 pt-4">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-white gap-2" onClick={() => navigate("/upload")}>
                   Start Now <ArrowRight className="w-4 h-4" />
-                </Button>
-                <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-muted">
-                  Learn More
                 </Button>
               </div>
             </div>
@@ -112,9 +108,6 @@ export default function Home() {
                 <li className="flex items-center gap-2 text-sm text-foreground">
                   <Check className="w-4 h-4 text-secondary" /> Secure data handling
                 </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> AWS S3 integration
-                </li>
               </ul>
             </Card>
 
@@ -138,10 +131,7 @@ export default function Home() {
                   <Check className="w-4 h-4 text-secondary" /> Simplified medical terms
                 </li>
                 <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> Multi-language support
-                </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> Amazon Bedrock AI
+                  <Check className="w-4 h-4 text-secondary" /> Diagnosis summary
                 </li>
               </ul>
             </Card>
@@ -168,9 +158,6 @@ export default function Home() {
                 <li className="flex items-center gap-2 text-sm text-foreground">
                   <Check className="w-4 h-4 text-secondary" /> NGO programs
                 </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> DynamoDB database
-                </li>
               </ul>
             </Card>
 
@@ -191,13 +178,10 @@ export default function Home() {
               </p>
               <ul className="space-y-2">
                 <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> Diagnosis summary
+                  <Check className="w-4 h-4 text-secondary" /> Multi-language reports
                 </li>
                 <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> Treatment details
-                </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-secondary" /> AWS S3 storage
+                  <Check className="w-4 h-4 text-secondary" /> All-in-one report (Diagnosis, medication, etc)
                 </li>
               </ul>
             </Card>
@@ -241,116 +225,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tech Stack Section */}
-      <section id="about" className="py-20 bg-white">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Built on AWS Technology
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Leveraging enterprise-grade cloud services for reliability and scalability.
-              </p>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="architecture">Architecture</TabsTrigger>
-                <TabsTrigger value="security">Security</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-4">
-                <Card className="p-8 border border-border">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Platform Overview</h3>
-                  <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <div className="w-1 bg-primary rounded-full flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">Frontend</h4>
-                        <p className="text-muted-foreground">React.js with Tailwind CSS for a responsive, accessible user interface</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="w-1 bg-secondary rounded-full flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">Backend Orchestration</h4>
-                        <p className="text-muted-foreground">AWS Lambda for serverless computation and workflow management</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="w-1 bg-accent rounded-full flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">AI & Language Processing</h4>
-                        <p className="text-muted-foreground">Amazon Bedrock for clinical data extraction and Amazon Translate for multi-language support</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="w-1 bg-chart-5 rounded-full flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">Data Management</h4>
-                        <p className="text-muted-foreground">Amazon DynamoDB for scheme eligibility database and Amazon S3 for document storage</p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="architecture" className="space-y-4">
-                <Card className="p-8 border border-border">
-                  <h3 className="text-xl font-bold text-foreground mb-4">System Architecture</h3>
-                  <div className="bg-muted/50 rounded-lg p-6 font-mono text-sm text-foreground overflow-x-auto">
-                    <pre>{`React Frontend
-    ↓
-API Gateway
-    ↓
-AWS Lambda Functions
-    ├── Data Processing
-    ├── AI Analysis (Bedrock)
-    └── Eligibility Engine
-    ↓
-Data Layer
-    ├── DynamoDB (Schemes)
-    ├── S3 (Documents)
-    └── RDS (User Data)`}</pre>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="security" className="space-y-4">
-                <Card className="p-8 border border-border">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Security Features</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3">
-                      <Shield className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-foreground">Encrypted Data Transfer</p>
-                        <p className="text-sm text-muted-foreground">All data transmitted over HTTPS with TLS encryption</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Shield className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-foreground">AWS IAM Access Control</p>
-                        <p className="text-sm text-muted-foreground">Role-based access control for all AWS services</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Shield className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-foreground">Data Privacy Compliance</p>
-                        <p className="text-sm text-muted-foreground">HIPAA-compliant data handling and storage</p>
-                      </div>
-                    </li>
-                  </ul>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
         <div className="container text-center">
@@ -360,46 +234,16 @@ Data Layer
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join thousands of patients who are accessing better healthcare information and financial support.
           </p>
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-white gap-2">
+          <Button size="lg" className="bg-primary hover:bg-primary/90 text-white gap-2" onClick={() => navigate("/upload")}>
             Get Started Today <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-foreground text-white py-12">
+      <footer className="bg-foreground text-white py-8">
         <div className="container">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-bold mb-4">MediCare</h4>
-              <p className="text-sm text-gray-300">Making healthcare accessible to everyone.</p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 pt-8 text-center text-sm text-gray-300">
+          <div className="text-center text-sm text-gray-300">
             <p>&copy; 2026 MediCare Platform. All rights reserved.</p>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
 /**
@@ -31,6 +31,28 @@ export default function ClinicalUpload() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Generate a reportId only once per session
+  const [reportId] = useState(() => {
+    const saved = localStorage.getItem("patient_profile");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.id) return parsed.id;
+    }
+    return `MAD-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  });
+
+  // Persistent session syncing
+  useEffect(() => {
+    if (patientName || patientAge) {
+      localStorage.setItem("patient_profile", JSON.stringify({
+        name: patientName,
+        age: patientAge,
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        id: reportId
+      }));
+    }
+  }, [patientName, patientAge, reportId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -100,21 +122,32 @@ export default function ClinicalUpload() {
 
     setIsSubmitting(true);
     try {
-      // 1. Get the key of the first successful upload
-      // If no file, we might want to handle text-only analysis later
-      const successfulFile = uploadedFiles.find(f => f.status === "success");
-      if (!successfulFile) {
-        throw new Error("Please wait for the file to finish uploading or provide medical text.");
+      let response;
+      if (uploadedFiles.length > 0) {
+        // 1. Get the key of the first successful upload
+        const successfulFile = uploadedFiles.find((f) => f.status === "success");
+        if (!successfulFile) {
+          throw new Error("Please wait for the file to finish uploading or try again.");
+        }
+
+        const key = `uploads/${successfulFile.name}`;
+
+        // 2. Trigger AI Analysis with file
+        response = await fetch("http://localhost:5000/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, raw_text: clinicalData }), // Send both if available
+        });
+      } else if (clinicalData) {
+        // 2. Trigger AI Analysis with text only
+        response = await fetch("http://localhost:5000/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw_text: clinicalData }),
+        });
+      } else {
+        throw new Error("Please provide either medical text or upload a document.");
       }
-
-      const key = `uploads/${successfulFile.name}`;
-
-      // 2. Trigger AI Analysis
-      const response = await fetch("http://localhost:5000/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key }),
-      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -125,8 +158,9 @@ export default function ClinicalUpload() {
       
       // 3. Store results for the Explanation page
       localStorage.setItem("medical_analysis", JSON.stringify(data.results));
+      localStorage.setItem("raw_clinical_notes", clinicalData); 
       
-      // 4. Navigate to explanation page
+      // Navigate to explanation page
       navigate("/explanation");
     } catch (error: any) {
       console.error("Analysis Error:", error);
@@ -259,7 +293,7 @@ export default function ClinicalUpload() {
                       onChange={handleFileUpload}
                       className="hidden"
                       id="file-upload"
-                      accept=".txt,.pdf,.doc,.docx"
+                      accept=".txt"
                     />
                     <label htmlFor="file-upload" className="cursor-pointer block">
                       <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
@@ -267,7 +301,10 @@ export default function ClinicalUpload() {
                         Click to upload or drag and drop
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Supported formats: TXT, PDF, DOC, DOCX (Max 10MB)
+                        Supported formats: TXT (Max 10MB)
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 italic">
+                        PDF, DOC, DOCX support coming soon!
                       </p>
                     </label>
                   </div>
@@ -375,9 +412,7 @@ export default function ClinicalUpload() {
                 <h4 className="font-semibold text-foreground mb-2">Supported file formats</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Text files (.txt)</li>
-                  <li>• PDF documents (.pdf)</li>
-                  <li>• Word documents (.doc, .docx)</li>
-                  <li>• Coming soon: Excel, Forms</li>
+                  <li className="italic text-primary/70">• Coming soon: PDF (.pdf), Word (.doc, .docx), Excel, Forms</li>
                 </ul>
               </div>
             </div>
