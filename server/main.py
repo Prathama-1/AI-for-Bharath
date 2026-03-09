@@ -64,27 +64,32 @@ app.add_middleware(
 async def root():
     return {"message": "Python API for Medical Assistance Platform is running!"}
 
+# AWS Service Clients with unified error handling
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "medical-schemes")
+BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.amazon.nova-2-lite-v1:0")
+
 s3_client = boto3.client(
     "s3",
-    region_name=os.getenv("AWS_REGION", "us-east-1"),
+    region_name=AWS_REGION,
     config=Config(signature_version="s3v4"),
 )
 
 translate_client = boto3.client(
     "translate",
-    region_name=os.getenv("AWS_REGION", "us-east-1"),
+    region_name=AWS_REGION,
 )
 
 # Bedrock Client for AI Analysis
 bedrock_client = boto3.client(
     "bedrock-runtime",
-    region_name=os.getenv("AWS_REGION", "us-east-1"),
+    region_name=AWS_REGION,
 )
 
 # DynamoDB Resource
 dynamodb = boto3.resource(
     "dynamodb",
-    region_name=os.getenv("AWS_REGION", "us-east-1"),
+    region_name=AWS_REGION,
 )
 
 class AnalyzeRequest(BaseModel):
@@ -117,7 +122,7 @@ async def check_eligibility(request: EligibilityRequest):
     Checks eligibility for government health schemes based on live DynamoDB data.
     """
     try:
-        table = dynamodb.Table("medical-schemes")
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
         # Wrapped in backoff retry
         response = await async_backoff_retry(table.scan)
         db_schemes = response.get('Items', [])
@@ -256,8 +261,8 @@ async def analyze_file(request_data: AnalyzeRequest):
         else:
             raise HTTPException(status_code=400, detail="No medical text or file key provided")
 
-        # 2. Prepare Bedrock Call (Amazon Nova 2 Lite - US Inference Profile)
-        model_id = "us.amazon.nova-2-lite-v1:0"
+        # 2. Prepare Bedrock Call (Amazon Nova 2 Lite)
+        model_id = BEDROCK_MODEL_ID
         print(f"DEBUG: Using Bedrock model_id: {model_id}")
         
         system_prompt = (
