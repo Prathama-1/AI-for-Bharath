@@ -166,6 +166,7 @@ export default function PDFGeneration() {
   } | null>(null);
   const [patientProfile, setPatientProfile] = useState<{ name: string, age: string, date: string, id: string } | null>(null);
   const [rawNotes, setRawNotes] = useState<string>("");
+  const [pdfCanvasData, setPdfCanvasData] = useState<string | null>(null);
 
   useEffect(() => {
     const savedAnalysis = localStorage.getItem("medical_analysis");
@@ -298,97 +299,87 @@ export default function PDFGeneration() {
   const handleGeneratePDF = async () => {
     setIsGenerating(true);
 
-    // Simulate PDF generation with AWS Lambda + S3
-    setTimeout(() => {
-      setIsGenerating(false);
+    // 1. Ensure html2canvas is loaded
+    if (!(window as any).html2canvas) {
+      const loadScript = () => {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      };
+      try {
+        await loadScript();
+      } catch (err) {
+        setIsGenerating(false);
+        alert("Failed to load PDF engine. Please check connection.");
+        return;
+      }
+    }
+
+    // 2. Capture the preview element while it's still in the DOM
+    try {
+      const element = document.getElementById("report-preview");
+      if (!element) throw new Error("Preview element not found");
+
+      // Clear scroll constraints for capture
+      const originalStyle = element.getAttribute("style") || "";
+      element.style.maxHeight = "none";
+      element.style.overflow = "visible";
+
+      const canvas = await (window as any).html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+
+      element.setAttribute("style", originalStyle);
+      setPdfCanvasData(canvas.toDataURL("image/png"));
+      
       setIsGenerated(true);
-    }, 2000);
+    } catch (error: any) {
+      console.error("Capture failed:", error);
+      alert(`Capture Error: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleDownload = () => {
-    setIsGenerating(true);
+    if (!pdfCanvasData) {
+      alert("PDF data not ready. Please try regenerating.");
+      return;
+    }
 
-    setTimeout(() => {
-      try {
-        const doc = new jsPDF();
-        let yOffset = 20;
-        const addText = (text: string, size: number, isBold: boolean, xOffset: number = 20, align: "left" | "center" = "left") => {
-          doc.setFontSize(size);
-          doc.setFont("helvetica", isBold ? "bold" : "normal");
-          const lines = doc.splitTextToSize(text, 170);
-
-          if (align === "center") {
-            doc.text(lines, 105, yOffset, { align: "center" });
-            yOffset += lines.length * 7 + 3;
-          } else {
-            if (yOffset + (lines.length * 7) > 280) {
-              doc.addPage();
-              yOffset = 20;
-            }
-            doc.text(lines, xOffset, yOffset);
-            yOffset += lines.length * 7 + 3;
-          }
-        };
-
-        const titleText = previewContent.title || "CLINICAL ASSISTANCE RECORD";
-        addText(titleText.toUpperCase(), 18, true, 105, "center");
-        yOffset += 5;
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const margin = 10;
+      const targetWidth = pdfWidth - (margin * 2);
+      
+      // Calculate height based on aspect ratio
+      const img = new Image();
+      img.src = pdfCanvasData;
+      img.onload = () => {
+        const targetHeight = (img.height * targetWidth) / img.width;
         
-        const patientInfo = `Patient: ${patientProfile?.name || "System Record"}    Age: ${patientProfile?.age || "--"}`;
-        addText(patientInfo, 12, false, 105, "center");
-        yOffset += 5;
+        pdf.setProperties({
+          title: `Medical_Report_${patientProfile?.name || "Patient"}`
+        });
 
-        const reportInfo = `Date: ${patientProfile?.date || "08 Mar 2026"}    ID: ${patientProfile?.id || "MAD-2026-X"}`;
-        addText(reportInfo, 10, false, 105, "center");
-
-        yOffset += 15;
-        doc.line(20, yOffset - 5, 190, yOffset - 5);
-
-        addText(previewContent.headers.diagnosis || "Clinical Diagnosis", 14, true);
-        addText(previewContent.rawNotes || "See original upload for details.", 12, false, 20);
-        yOffset += 10;
-
-        addText(previewContent.headers.medications || "Current Medications", 14, true);
-        if (previewContent.medications && previewContent.medications.length > 0) {
-          previewContent.medications.forEach(m => {
-            addText(`•  ${m.name} (${m.dosage})`, 12, true, 25);
-            addText(`${m.why_prescribed}`, 11, false, 30);
-            yOffset += 3;
-          });
-        } else {
-          addText("No current medications.", 12, false, 25);
-        }
-        yOffset += 8;
-
-        addText(previewContent.headers.actions || "Recommended Actions", 14, true);
-        if (previewContent.steps && previewContent.steps.length > 0) {
-          previewContent.steps.forEach(step => {
-            addText(`•  ${step}`, 12, false, 25);
-          });
-        }
-        yOffset += 10;
-
-        addText(previewContent.schemeHeader || "Eligibility", 14, true);
-        if (eligibleSchemes.length > 0) {
-          eligibleSchemes.forEach(scheme => {
-            addText(`•  ${scheme.name} - ${previewContent.headers.verified || "Verified Eligible"}`, 12, false, 25);
-          });
-        } else {
-          addText(previewContent.headers.noSchemes || "No schemes", 12, false, 25);
-        }
-        yOffset += 10;
-
-        addText(previewContent.nextStepsHeader || "Next Steps", 14, true);
-        addText(previewContent.headers.instruction || "Consult provider.", 12, false, 20);
-
-        doc.save(`Medical_Report_${patientProfile?.name || "Patient"}.pdf`);
-      } catch (error) {
-        console.error("PDF generation failed:", error);
-      } finally {
-        setIsGenerating(false);
-        setIsGenerated(true);
-      }
-    }, 1000);
+        pdf.addImage(pdfCanvasData, "PNG", margin, margin, targetWidth, targetHeight);
+        pdf.save(`Medical_Report_${patientProfile?.name || "Patient"}.pdf`);
+      };
+    } catch (error: any) {
+      console.error("PDF download failed:", error);
+      alert(`Download Error: ${error.message}`);
+    }
   };
 
   return (
@@ -486,7 +477,7 @@ export default function PDFGeneration() {
                   </Badge>
                 </div>
 
-                <div className="bg-white border border-border rounded-lg p-10 space-y-8 shadow-sm max-h-[600px] overflow-y-auto relative">
+                <div id="report-preview" className="bg-white border border-border rounded-lg p-10 space-y-8 shadow-sm relative">
                   {isTranslating && (
                     <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center backdrop-blur-[1px]">
                       <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
