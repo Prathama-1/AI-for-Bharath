@@ -13,6 +13,8 @@ import { useLocation } from "wouter";
  * - Reassuring animations and micro-interactions
  */
 
+import heroBanner from "@/assets/hero-banner.png";
+
 export default function Home() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
@@ -58,16 +60,17 @@ export default function Home() {
             </div>
 
             {/* Right: Hero Image */}
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-lg">
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="rounded-2xl overflow-hidden shadow-2xl max-w-[700px] border-4 border-white bg-white">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663396054467/CWjZTMXfdzT9dWLcnjpQ8h/hero-banner-WC5zGe63ewAyRmjgL7crJd.webp"
+                  src={heroBanner}
                   alt="Healthcare consultation"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover max-h-[500px]"
                 />
               </div>
               {/* Decorative element */}
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-secondary/20 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-full blur-3xl -z-10"></div>
+              <div className="absolute -top-6 -left-6 w-24 h-24 bg-secondary/10 rounded-full blur-2xl -z-10"></div>
             </div>
           </div>
         </div>
