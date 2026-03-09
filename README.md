@@ -38,27 +38,27 @@ The Medical Assistance Platform bridges the gap between complex medical terminol
 
 ## 🏗️ Architecture
 
-```
 ┌─────────────────────────────────────────┐
-│     React Frontend (This Application)   │
-│  - Upload Module                        │
-│  - Explanation Module                   │
-│  - Eligibility Module                   │
-│  - PDF Generation Module                │
+│     React Frontend (Vite + Tailwind)    │
+│  - Patient Wellness Roadmap (Bedrock)   │
+│  - Multilingual Translation (Translate) │
+│  - Scheme Matching Engine (DynamoDB)    │
+│  - Claim-Ready PDF Export (jsPDF)       │
 └────────────────────┬────────────────────┘
                      │
         ┌────────────┴────────────┐
-        │                         │
-    API Gateway            Lambda Functions
-        │                         │
+        │   FastAPI Backend (Vercel) │
+        │   - Optimized Throttling   │
+        │   - Exponential Backoff    │
+        └────────────┬────────────┘
+                     │
     ┌───┴──────────────────────┬──┴────┐
     │                          │       │
-   S3                    DynamoDB  Bedrock
-(Documents)            (Schemes)  (AI/ML)
+    S3                    DynamoDB  Bedrock
+(Medical Docs)         (Live Schemes) (Nova 2 AI)
                                    │
-                            Translate
-                            (Languages)
-```
+                            AWS Translate
+                            (8+ Languages)
 
 ## 🚀 Quick Start
 
