@@ -1,6 +1,6 @@
 # Medical Assistance Platform
 
-A comprehensive healthcare technology solution that helps patients understand their medical conditions in simple language, discover financial aid eligibility, and generate claim assistance documents—all powered by AWS services.
+FROM DIAGNOSIS TO FINANCIAL SUPPORT: A comprehensive healthcare technology solution that helps patients understand their medical conditions in simple language, discover financial aid eligibility, and generate claim assistance documents
 
 ## 🎯 Overview
 
@@ -11,28 +11,29 @@ The Medical Assistance Platform bridges the gap between complex medical terminol
 ### 1. Clinical Data Upload
 - **Simple text-based uploads** for patient medical records
 - **File upload support** for documents (TXT)
+- **TEST INPUT**: Please use the [demo_clinical_data.txt](./demo_clinical_data.txt) file as a test input.
 - **Secure storage** on AWS S3 with encryption
 - **Progress tracking** for file uploads
 - **Future enhancements**: Form-based input, Excel imports
 
 ### 2. Patient-Friendly Explanation
 - **Automatic simplification** of medical jargon using Amazon Bedrock AI
-- **Multi-language support** with 8 regional languages (Hindi, Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati)
+- **Multi-language support** with 1 regional languages (Hindi)
 - **Audio narration** for accessibility using browser speech synthesis
 - **Copy-to-clipboard** functionality for easy sharing
-- **Powered by**: Amazon Bedrock (AI) + Amazon Translate (Languages)
+- **Powered by**: Amazon Bedrock (AI) , NOVA 2 Lite
 
 ### 3. Financial Eligibility Matching
 - **Automatic scheme matching** based on patient profile
 - **Color-coded eligibility status** (Eligible, Partially Eligible, Not Eligible)
-- **Comprehensive scheme database** with 100+ government, state, and NGO programs
+- **Comprehensive scheme database** with a few schemes in the DB for now
 - **Powered by**: Amazon DynamoDB (scheme database) + custom rule-based logic
 
 ### 4. Claim Assistance PDF Generator
 - **Professional document generation** with all relevant information
 - **Includes**: Diagnosis summary, treatment details, eligibility status, next steps
 - **Downloadable PDF** for hospital submission
-- **Shareable document** for support centers
+- **Shareable document** for support centers and with doctors
 
 
 ## 🚀 Quick Start
@@ -45,18 +46,13 @@ The Medical Assistance Platform bridges the gap between complex medical terminol
 ### Installation
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-
-
 # Install dependencies
 pnpm install
 
-# Start development server
-pnpm dev
+# Start Local Environment (Run in separate terminals)
+pnpm dev    # Frontend (localhost:3000)
+pnpm api    # Backend API (localhost:5000)
 ```
-
-The application will be available at `http://localhost:3000`
 
 
 
