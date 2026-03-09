@@ -1,0 +1,15 @@
+Diagnosis: Type 2 Diabetes Mellitus with early Background Retinopathy
+
+Clinical Notes:
+Patient reports occasional blurred vision and polyuria. 
+HbA1c level is 8.2% (Target < 7.0%). 
+Fundus examination shows minor microaneurysms in the left eye.
+
+Current Medications:
+1. Metformin 1000mg BID
+2. Sitagliptin 100mg QD
+
+Recommendations:
+- Strict carbohydrate counting and glycemic control.
+- Annual diabetic retinopathy screening with an ophthalmologist.
+- Daily foot inspections for neuropathy prevention.
