@@ -50,8 +50,9 @@ The Medical Assistance Platform bridges the gap between complex medical terminol
 pnpm install
 
 # Start Local Environment (Run in separate terminals)
-pnpm dev    # Frontend (localhost:3000)
 pnpm api    # Backend API (localhost:5000)
+pnpm dev    # Frontend (localhost:3000)
+
 ```
 
 
