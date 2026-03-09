@@ -8,8 +8,47 @@ from botocore.exceptions import ClientError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import asyncio
+import time
+from botocore.exceptions import ClientError as BotoClientError
 
 load_dotenv()
+
+async def async_backoff_retry(func, *args, max_retries=3, initial_delay=1, **kwargs):
+    """
+    Implements exponential backoff for AWS service calls.
+    Retries on throttling and transient errors.
+    """
+    retries = 0
+    delay = initial_delay
+    while retries <= max_retries:
+        try:
+            # If the function is a coroutine, await it; otherwise call it normally
+            if asyncio.iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                # For synchronous boto3 calls, we run them in a thread pool to avoid blocking
+                loop = asyncio.get_event_loop()
+                return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+        except BotoClientError as e:
+            error_code = e.response.get("Error", {}).get("Code")
+            transient_errors = [
+                "ThrottlingException", 
+                "ProvisionedThroughputExceededException", 
+                "ServiceUnavailableException",
+                "RequestLimitExceeded",
+                "LimitExceededException"
+            ]
+            
+            if error_code in transient_errors and retries < max_retries:
+                print(f"DEBUG: AWS Throttled ({error_code}). Retrying in {delay}s... (Attempt {retries + 1}/{max_retries})")
+                await asyncio.sleep(delay)
+                retries += 1
+                delay *= 2  # Exponential increase
+            else:
+                raise e
+        except Exception as e:
+            raise e
 
 app = FastAPI()
 
@@ -79,7 +118,8 @@ async def check_eligibility(request: EligibilityRequest):
     """
     try:
         table = dynamodb.Table("medical-schemes")
-        response = table.scan()
+        # Wrapped in backoff retry
+        response = await async_backoff_retry(table.scan)
         db_schemes = response.get('Items', [])
         
         results = []
@@ -233,8 +273,9 @@ async def analyze_file(request_data: AnalyzeRequest):
         
         user_message = f"Analyze this report:\n\n{file_content}"
 
-        # Using the Bedrock Converse API
-        response = bedrock_client.converse(
+        # Using the Bedrock Converse API with Exponential Backoff
+        response = await async_backoff_retry(
+            bedrock_client.converse,
             modelId=model_id,
             messages=[{"role": "user", "content": [{"text": user_message}]}],
             system=[{"text": system_prompt}],
@@ -285,7 +326,9 @@ async def translate_text(request: TranslateRequest):
         return {"translatedText": mock_hindi.get(request.text, f"[Translated to {request.target_lang}]: {request.text}")}
 
     try:
-        response = translate_client.translate_text(
+        # Wrapped in backoff retry
+        response = await async_backoff_retry(
+            translate_client.translate_text,
             Text=request.text,
             SourceLanguageCode="en",
             TargetLanguageCode=request.target_lang
@@ -317,7 +360,9 @@ async def translate_batch(request: TranslateBatchRequest):
         if len(combined_text) > 9000:
              combined_text = combined_text[:9000]
 
-        response = translate_client.translate_text(
+        # Wrapped in backoff retry
+        response = await async_backoff_retry(
+            translate_client.translate_text,
             Text=combined_text,
             SourceLanguageCode="en",
             TargetLanguageCode=request.target_lang
