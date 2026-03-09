@@ -78,6 +78,8 @@ export default function Explanation() {
         console.error("Failed to parse saved analysis:", err);
       }
     }
+    // Fix: Jump to top on page load
+    window.scrollTo(0, 0);
   }, []);
 
   const handleSpeak = (text: string) => {
@@ -238,8 +240,8 @@ export default function Explanation() {
                 </div>
               </Card>
 
-              <Card className="p-8 border border-secondary/20 bg-secondary/5 relative flex flex-col justify-between">
-                <div className="space-y-4">
+              <Card className="p-8 border border-secondary/20 bg-secondary/5 relative flex flex-col min-h-[320px]">
+                <div className="flex-1 space-y-4">
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <div className="p-2 bg-secondary/20 rounded-lg">
                       <Globe className="w-5 h-5 text-secondary" />
@@ -247,16 +249,18 @@ export default function Explanation() {
                     Financial Support
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                    Based on your medical report, you may be eligible for specific government schemes and financial aid.
+                    Based on your medical report, you may be eligible for specific government schemes and financial aid to help cover treatment costs.
                   </p>
                 </div>
-                <Button 
-                  onClick={() => navigate("/eligibility")}
-                  className="w-full bg-secondary hover:bg-secondary/90 text-white mt-8 py-6 rounded-xl font-bold transition-all hover:translate-y-[-2px] hover:shadow-lg"
-                >
-                  Verify Eligibility
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="pt-6">
+                  <Button 
+                    onClick={() => navigate("/eligibility")}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-white py-6 rounded-xl font-bold transition-all hover:translate-y-[-2px] hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    Verify Eligibility
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </Card>
             </section>
           </div>
