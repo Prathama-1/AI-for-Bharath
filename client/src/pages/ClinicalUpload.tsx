@@ -170,7 +170,7 @@ export default function ClinicalUpload() {
     }
   };
 
-  const isFormValid = patientName && patientAge && (clinicalData || uploadedFiles.length > 0);
+  const isFormValid = patientName.trim() !== "" && patientAge !== "" && (clinicalData.trim() !== "" || uploadedFiles.some(f => f.status === "success" || f.status === "uploading"));
 
   return (
     <div className="min-h-screen bg-background">
@@ -225,7 +225,7 @@ export default function ClinicalUpload() {
               <div className="space-y-6">
                 <div>
                   <Label htmlFor="patient-name" className="text-foreground font-semibold mb-2 block">
-                    Patient Name
+                    Patient Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="patient-name"
@@ -242,7 +242,7 @@ export default function ClinicalUpload() {
 
                 <div>
                   <Label htmlFor="patient-age" className="text-foreground font-semibold mb-2 block">
-                    Patient Age
+                    Patient Age <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="patient-age"
