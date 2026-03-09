@@ -7,8 +7,8 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import google.generativeai as genai
 from dotenv import load_dotenv
+from mangum import Mangum
 
 load_dotenv()
 
@@ -341,6 +341,8 @@ async def translate_batch(request: TranslateBatchRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn
