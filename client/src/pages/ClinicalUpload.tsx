@@ -71,10 +71,8 @@ export default function ClinicalUpload() {
       setUploadedFiles((prev) => [...prev, newFile]);
 
       try {
-        console.log(`Starting upload for ${file.name}...`);
         // 1. Get presigned URL from the Python backend
         const apiUrl = `/api/upload-url?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type || "text/plain")}`;
-        console.log(`Fetching presigned URL from: ${apiUrl}`);
         
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -83,7 +81,6 @@ export default function ClinicalUpload() {
         }
         
         const { url } = await response.json();
-        console.log("Received presigned URL. Uploading to S3...");
 
         // 2. Upload directly to S3
         const uploadResponse = await fetch(url, {
@@ -98,15 +95,12 @@ export default function ClinicalUpload() {
           throw new Error(`S3 Upload failed with status: ${uploadResponse.status}`);
         }
 
-        console.log("Upload successful!");
-
         setUploadedFiles((prev) =>
           prev.map((f) =>
             f.id === newFileId ? { ...f, status: "success" } : f
           )
         );
       } catch (error) {
-        console.error("S3 Upload Error:", error);
         setUploadedFiles((prev) =>
           prev.map((f) =>
             f.id === newFileId ? { ...f, status: "error" } : f
@@ -163,7 +157,6 @@ export default function ClinicalUpload() {
       // Navigate to explanation page
       navigate("/explanation");
     } catch (error: any) {
-      console.error("Analysis Error:", error);
       alert(`Analysis failed: ${error.message}`);
     } finally {
       setIsSubmitting(false);

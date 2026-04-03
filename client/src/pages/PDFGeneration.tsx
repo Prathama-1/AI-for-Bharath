@@ -266,7 +266,7 @@ export default function PDFGeneration() {
         }
       });
     } catch (error) {
-      console.error("Translation Error:", error);
+
       setSelectedLanguage("en");
     } finally {
       setIsTranslating(false);
@@ -342,7 +342,6 @@ export default function PDFGeneration() {
       
       setIsGenerated(true);
     } catch (error: any) {
-      console.error("Capture failed:", error);
       alert(`Capture Error: ${error.message}`);
     } finally {
       setIsGenerating(false);
@@ -377,7 +376,6 @@ export default function PDFGeneration() {
         pdf.save(`Medical_Report_${patientProfile?.name || "Patient"}.pdf`);
       };
     } catch (error: any) {
-      console.error("PDF download failed:", error);
       alert(`Download Error: ${error.message}`);
     }
   };

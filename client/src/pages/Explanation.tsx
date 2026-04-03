@@ -75,7 +75,6 @@ export default function Explanation() {
           setAnalysis(parsed);
         }
       } catch (err) {
-        console.error("Failed to parse saved analysis:", err);
       }
     }
     // Fix: Jump to top on page load

@@ -51,7 +51,6 @@ export default function Eligibility() {
       const eligible = data.schemes.filter((s: any) => s.status === "Eligible" || s.status === "Partial Match");
       localStorage.setItem("eligible_schemes", JSON.stringify(eligible));
     } catch (error) {
-      console.error("Eligibility check failed:", error);
     } finally {
       setIsChecking(false);
     }
